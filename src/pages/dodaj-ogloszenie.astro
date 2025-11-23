@@ -1,0 +1,23 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { AdForm } from '../components/announcements/AdForm';
+
+// Verify authentication
+const {
+  data: { user },
+  error: authError,
+} = await Astro.locals.supabase.auth.getUser();
+
+if (authError || !user) {
+  return Astro.redirect('/logowanie');
+}
+
+const userId = user.id;
+---
+
+<Layout title="Dodaj ogłoszenie">
+  <main class="container mx-auto px-4 py-8">
+    <AdForm client:only="react" mode="create" userId={userId} />
+  </main>
+</Layout>
+

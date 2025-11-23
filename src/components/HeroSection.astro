@@ -1,0 +1,39 @@
+---
+import { Button } from "@/components/ui/button";
+---
+
+<header class="w-full py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/20">
+  <div class="max-w-4xl mx-auto text-center space-y-6">
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight">
+      Pomagamy odnaleźć zaginione zwierzęta
+    </h1>
+    <p class="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+      Jeśli zgubiłeś swojego pupila lub znalazłeś zwierzę, które potrzebuje pomocy, 
+      jesteśmy tutaj, aby pomóc w połączeniu właścicieli z ich ukochanymi zwierzętami.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+      <Button 
+        asChild
+        size="lg"
+        class="w-full sm:w-auto min-w-[200px] text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
+        aria-label="Zgubiłem zwierzę - dodaj ogłoszenie"
+      >
+        <a href="/dodaj-ogloszenie?type=lost">
+          Zgubiłem
+        </a>
+      </Button>
+      <Button 
+        asChild
+        size="lg"
+        variant="outline"
+        class="w-full sm:w-auto min-w-[200px] text-base font-semibold border-2 border-foreground/20 hover:bg-accent hover:border-foreground/30 focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:ring-offset-2 transition-all"
+        aria-label="Znalazłem zwierzę - dodaj ogłoszenie"
+      >
+        <a href="/dodaj-ogloszenie?type=found">
+          Znalazłem
+        </a>
+      </Button>
+    </div>
+  </div>
+</header>
+

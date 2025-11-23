@@ -1,8 +1,10 @@
 ---
-import Welcome from "../components/Welcome.astro";
+import HeroSection from "../components/HeroSection.astro";
+import LatestAdsCarousel from "../components/LatestAdsCarousel.tsx";
 import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout>
-  <Welcome />
+  <HeroSection />
+  <LatestAdsCarousel client:load />
 </Layout>

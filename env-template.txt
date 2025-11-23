@@ -1,0 +1,13 @@
+# Supabase Configuration
+# Dla lokalnego developmentu (po uruchomieniu `supabase start`):
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# Dla produkcyjnego środowiska (wartości z Supabase Dashboard):
+# SUPABASE_URL=https://your-project.supabase.co
+# SUPABASE_KEY=your-production-anon-key
+# SUPABASE_SERVICE_ROLE_KEY=your-production-service-role-key
+
+# Other environment variables
+OPENROUTER_API_KEY=your-openrouter-key-here
