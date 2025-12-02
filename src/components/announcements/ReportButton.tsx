@@ -62,12 +62,15 @@ export function ReportButton({ announcementId, supabaseUrl, supabaseKey }: Repor
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          toast.info('Funkcja zgłaszania ogłoszeń wkrótce będzie dostępna');
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 409) {
+          toast.error(errorData.error?.message || 'Już zgłosiłeś to ogłoszenie');
+        } else if (response.status === 404) {
+          toast.error(errorData.error?.message || 'Ogłoszenie nie zostało znalezione');
         } else {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Nie udało się zgłosić ogłoszenia');
+          throw new Error(errorData.error?.message || 'Nie udało się zgłosić ogłoszenia');
         }
+        return;
       } else {
         toast.success('Ogłoszenie zostało zgłoszone');
         setReason('');
