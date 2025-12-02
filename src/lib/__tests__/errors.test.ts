@@ -271,29 +271,41 @@ describe('handleApiError', () => {
   });
 
   it('should return INTERNAL_ERROR for unexpected errors', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('Unexpected error');
     const response = handleApiError(error);
     const data = await response.json();
     expect(data.error.code).toBe('INTERNAL_ERROR');
     expect(data.error.message).toBe('Wystąpił błąd serwera');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Unexpected error:', error);
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle string errors', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = 'String error';
     const response = handleApiError(error);
     expect(response.status).toBe(500);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Unexpected error:', error);
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle null errors', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = null;
     const response = handleApiError(error);
     expect(response.status).toBe(500);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Unexpected error:', error);
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle undefined errors', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = undefined;
     const response = handleApiError(error);
     expect(response.status).toBe(500);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Unexpected error:', error);
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle errors without details', async () => {
