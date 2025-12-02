@@ -28,11 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Verify ESLint installation
-        run: npx eslint --version || npm list eslint
-      
       - name: Run linter
-        run: npx eslint .
+        run: npm run lint
       
       - name: Run unit tests
         run: npm run test:unit
