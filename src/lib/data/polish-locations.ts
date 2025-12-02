@@ -442,3 +442,4 @@ export function isValidPoviatForVoivodeship(voivodeship: string, poviat: string)
   return poviats.includes(poviat);
 }
 
+

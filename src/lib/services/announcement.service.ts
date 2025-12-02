@@ -70,6 +70,9 @@ export class AnnouncementService {
     if (filters.status) {
       query = query.eq('status', filters.status);
     }
+    if (filters.author_id) {
+      query = query.eq('author_id', filters.author_id);
+    }
 
     // Apply sorting
     query = query.order(order_by, { ascending: order === 'asc' });

@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import type { Database } from '@/db/database.types';
+import { getOrCreateSupabaseClient } from '@/lib/supabase-client-factory';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +43,10 @@ import type { AnnouncementDto } from '@/types';
 interface AdFormProps {
   mode: 'create' | 'edit';
   initialData?: AnnouncementDto;
-  userId: string;
+  userId?: string; // Optional - will be fetched client-side if not provided
+  initialUserId?: string; // Initial user ID from server (may be null if not authenticated)
+  supabaseUrl?: string;
+  supabaseKey?: string;
   onSuccess?: (announcementId: string) => void;
 }
 
@@ -52,10 +58,54 @@ const STEPS = [
   { id: 3, title: 'Szczegóły zwierzęcia' },
 ];
 
-export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
+export function AdForm({
+  mode,
+  initialData,
+  userId: propUserId,
+  initialUserId,
+  supabaseUrl,
+  supabaseKey,
+  onSuccess,
+}: AdFormProps) {
+  const [userId, setUserId] = useState<string | null>(propUserId || initialUserId || null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(!propUserId && !initialUserId);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Create Supabase client for auth checking (using singleton to prevent multiple instances)
+  const supabaseClient = React.useMemo(() => {
+    return getOrCreateSupabaseClient(supabaseUrl, supabaseKey);
+  }, [supabaseUrl, supabaseKey]);
+
+  // Check authentication on mount if userId not provided
+  useEffect(() => {
+    if (!supabaseClient || userId) return;
+
+    const checkAuth = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error || !session?.user) {
+          // Not authenticated - redirect to login
+          const returnUrl = window.location.pathname + window.location.search;
+          window.location.href = `/logowanie?redirectTo=${encodeURIComponent(returnUrl)}`;
+          return;
+        }
+
+        setUserId(session.user.id);
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        const returnUrl = window.location.pathname + window.location.search;
+        window.location.href = `/logowanie?redirectTo=${encodeURIComponent(returnUrl)}`;
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [supabaseClient, userId]);
 
   const schema = mode === 'create' ? createAnnouncementSchema : updateAnnouncementSchema;
 
@@ -103,14 +153,60 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty, isSubmitting]);
 
-  const nextStep = async () => {
+  const nextStep = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent form submission
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     // Validate current step fields
     const fieldsToValidate = getFieldsForStep(currentStep);
-    const isValid = await form.trigger(fieldsToValidate as any);
+    console.log('Validating step', currentStep, 'fields:', fieldsToValidate);
+    
+    // Log current form values for debugging
+    const formValues = form.getValues();
+    console.log('Current form values:', {
+      voivodeship: formValues.voivodeship,
+      poviat: formValues.poviat,
+      image_url: formValues.image_url,
+    });
+    
+    // If no fields to validate (step 3), skip validation
+    let isValid = true;
+    if (fieldsToValidate.length > 0) {
+      isValid = await form.trigger(fieldsToValidate as any);
+      console.log('Validation result:', isValid);
+    } else {
+      console.log('Step 3 - no fields to validate, skipping validation');
+    }
+    
+    if (!isValid) {
+      // Log validation errors
+      const errors = form.formState.errors;
+      console.log('Validation errors:', errors);
+      
+      // Show first error message
+      const firstErrorField = fieldsToValidate.find(field => errors[field as keyof typeof errors]);
+      if (firstErrorField) {
+        const error = errors[firstErrorField as keyof typeof errors];
+        if (error?.message) {
+          setApiError(`Błąd walidacji: ${error.message}`);
+        } else {
+          setApiError(`Błąd walidacji pola: ${firstErrorField}`);
+        }
+      } else {
+        setApiError('Wypełnij wszystkie wymagane pola');
+      }
+      return; // Don't proceed if validation failed
+    }
+    
+    setApiError(null);
 
-    if (isValid && currentStep < STEPS.length) {
+    // Move to next step if validation passed and not on last step
+    if (currentStep < STEPS.length) {
+      console.log('Moving from step', currentStep, 'to step', currentStep + 1);
       setCurrentStep(currentStep + 1);
-      setApiError(null);
+    } else {
+      console.log('Already on last step, cannot go further');
     }
   };
 
@@ -132,14 +228,49 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
           : `/api/announcements/${initialData?.id}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
-      // Get auth token
-      const {
+      if (!supabaseClient) {
+        throw new Error('Brak konfiguracji Supabase. Ustaw zmienne środowiskowe.');
+      }
+
+      // Get current session
+      let {
         data: { session },
-      } = await import('@/db/supabase.client').then((m) => m.supabaseClient.auth.getSession());
+        error: sessionError,
+      } = await supabaseClient.auth.getSession();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Błąd podczas pobierania sesji. Zaloguj się ponownie.');
+      }
 
       if (!session) {
         throw new Error('Brak sesji. Zaloguj się ponownie.');
       }
+
+      // Check if token is expired and refresh if needed
+      const now = Math.floor(Date.now() / 1000);
+      if (session.expires_at && session.expires_at < now + 60) {
+        // Token expires in less than 60 seconds, refresh it
+        console.log('Token expires soon, refreshing...');
+        const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error('Refresh error:', refreshError);
+          throw new Error('Nie udało się odświeżyć sesji. Zaloguj się ponownie.');
+        }
+        
+        if (refreshData?.session) {
+          session = refreshData.session;
+        }
+      }
+
+      if (!session.access_token) {
+        throw new Error('Brak tokenu dostępu. Zaloguj się ponownie.');
+      }
+
+      console.log('Sending request to:', url);
+      console.log('Token length:', session.access_token.length);
+      console.log('Token preview:', session.access_token.substring(0, 20) + '...');
 
       const response = await fetch(url, {
         method,
@@ -149,6 +280,9 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
         },
         body: JSON.stringify(data),
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -175,6 +309,36 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading state while checking auth
+  if (isCheckingAuth) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Don't render form if no userId
+  if (!userId) {
+    return null;
+  }
+
+  if (!supabaseClient) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle>Brak konfiguracji Supabase</CardTitle>
+          <CardDescription>
+            Uzupełnij zmienne środowiskowe `SUPABASE_URL` oraz `SUPABASE_KEY`, aby korzystać z
+            formularza.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -231,7 +395,17 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            onKeyDown={(e) => {
+              // Prevent form submission on Enter key when not on last step
+              if (e.key === 'Enter' && currentStep < STEPS.length) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            className="space-y-6"
+          >
             {apiError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -285,7 +459,11 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                         Tytuł <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="np. Zgubiony pies rasy labrador" {...field} />
+                        <Input
+                          placeholder="np. Zgubiony pies rasy labrador"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormDescription>Krótki, opisowy tytuł ogłoszenia</FormDescription>
                       <FormMessage />
@@ -326,7 +504,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                         Data zdarzenia <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormDescription>
                         Data, kiedy zwierzę zostało zgubione/znalezione
@@ -370,6 +548,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                           placeholder="np. Park Oliwski, przy stawie"
                           rows={3}
                           {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormDescription>
@@ -398,6 +577,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                           userId={userId}
                           announcementId={initialData?.id}
                           disabled={isSubmitting}
+                          supabaseClient={supabaseClient}
                         />
                       </FormControl>
                       {fieldState.error && (
@@ -417,6 +597,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
             {/* Step 3: Animal Details */}
             {currentStep === 3 && (
               <div className="space-y-4">
+                {console.log('Rendering step 3, currentStep:', currentStep)}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -478,7 +659,11 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                     <FormItem>
                       <FormLabel>Kolor</FormLabel>
                       <FormControl>
-                        <Input placeholder="np. czarny, biały" {...field} />
+                        <Input
+                          placeholder="np. czarny, biały"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -496,6 +681,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                           placeholder="Szczegółowy opis zwierzęcia..."
                           rows={5}
                           {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -514,6 +700,7 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
                           placeholder="np. obroża, chip, blizny..."
                           rows={3}
                           {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -586,7 +773,15 @@ export function AdForm({ mode, initialData, userId, onSuccess }: AdFormProps) {
               </Button>
 
               {currentStep < STEPS.length ? (
-                <Button type="button" onClick={nextStep} disabled={isSubmitting}>
+                <Button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    nextStep(e);
+                  }} 
+                  disabled={isSubmitting}
+                >
                   Dalej
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

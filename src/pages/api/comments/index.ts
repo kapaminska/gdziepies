@@ -84,11 +84,22 @@ export async function GET(context: APIContext) {
  */
 export async function POST(context: APIContext) {
   try {
-    // Check authentication
+    // Get token from Authorization header
+    const authHeader = context.request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedError();
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      throw new UnauthorizedError();
+    }
+
+    // Check authentication using the token
     const {
       data: { user },
       error: authError,
-    } = await context.locals.supabase.auth.getUser();
+    } = await context.locals.supabase.auth.getUser(token);
 
     if (authError || !user) {
       throw new UnauthorizedError();
@@ -119,4 +130,5 @@ export async function POST(context: APIContext) {
     return handleApiError(error);
   }
 }
+
 

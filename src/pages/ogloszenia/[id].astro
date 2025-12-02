@@ -1,0 +1,144 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { AnnouncementService } from '../../lib/services/announcement.service';
+import { NotFoundError } from '../../lib/errors';
+import { Badge } from '../../components/ui/badge';
+import AdInfoDetails from '../../components/announcements/AdInfoDetails.astro';
+import { GalleryDisplay } from '../../components/announcements/GalleryDisplay';
+import { ShareButton } from '../../components/announcements/ShareButton';
+import { ReportButton } from '../../components/announcements/ReportButton';
+import { ContactReveal } from '../../components/announcements/ContactReveal';
+import { AuthorControls } from '../../components/announcements/AuthorControls';
+import { CommentsSection } from '../../components/announcements/CommentsSection';
+import { AdStatusBadge } from '../../components/dashboard/AdStatusBadge';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/ogloszenia');
+}
+
+// Get announcement data
+let announcement;
+try {
+  announcement = await AnnouncementService.getAnnouncementById(
+    id,
+    Astro.locals.supabase
+  );
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    return Astro.redirect('/ogloszenia');
+  }
+  throw error;
+}
+
+// Get user session to check if user is the author
+const {
+  data: { user },
+  error: authError,
+} = await Astro.locals.supabase.auth.getUser();
+
+// Check if user is the author
+const isAuthor = user?.id === announcement.author_id;
+
+// Get badge variant and text for type
+function getBadgeInfo(type: 'lost' | 'found') {
+  return {
+    variant: type === 'lost' ? ('destructive' as const) : ('secondary' as const),
+    text: type === 'lost' ? 'Zaginiony' : 'Znaleziony',
+  };
+}
+
+const badgeInfo = getBadgeInfo(announcement.type);
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
+---
+
+<Layout title={`${announcement.title} - GdziePies`}>
+  <script define:vars={{ supabaseUrl, supabaseKey }}>
+    // Inject Supabase config into window for client-side access
+    window.__SUPABASE_URL__ = supabaseUrl;
+    window.__SUPABASE_KEY__ = supabaseKey;
+  </script>
+
+  <main class="container mx-auto px-4 py-8">
+    <div class="mb-4">
+      <a href="/ogloszenia" class="text-primary hover:underline">
+        ← Powrót do listy ogłoszeń
+      </a>
+    </div>
+
+    {/* Status banner for resolved announcements */}
+    {announcement.status === 'resolved' && (
+      <div class="mb-6 rounded-lg border bg-secondary/50 p-4">
+        <div class="flex items-center gap-2">
+          <AdStatusBadge status={announcement.status} />
+          <p class="text-sm text-muted-foreground">
+            To ogłoszenie zostało oznaczone jako znalezione.
+          </p>
+        </div>
+      </div>
+    )}
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Left column - Gallery and action buttons */}
+      <div class="space-y-4">
+        <div class="relative">
+          <GalleryDisplay imageUrl={announcement.image_url} title={announcement.title} />
+          <div class="absolute right-4 top-4 flex gap-2">
+            <Badge variant={badgeInfo.variant}>{badgeInfo.text}</Badge>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div class="flex gap-2">
+          <ShareButton client:visible />
+          <ReportButton
+            announcementId={announcement.id}
+            supabaseUrl={supabaseUrl}
+            supabaseKey={supabaseKey}
+            client:visible
+          />
+        </div>
+      </div>
+
+      {/* Right column - Details, Contact, Author Controls */}
+      <div class="space-y-6">
+        <AdInfoDetails announcement={announcement} />
+
+        {/* Contact section */}
+        <ContactReveal
+          announcementId={announcement.id}
+          supabaseUrl={supabaseUrl}
+          supabaseKey={supabaseKey}
+          client:visible
+        />
+
+        {/* Author controls - only visible to author */}
+        {isAuthor && (
+          <AuthorControls
+            announcementId={announcement.id}
+            currentStatus={announcement.status}
+            supabaseUrl={supabaseUrl}
+            supabaseKey={supabaseKey}
+            client:load
+          />
+        )}
+      </div>
+    </div>
+
+    {/* Comments section - full width below */}
+    <div class="mt-8">
+      <CommentsSection
+        announcementId={announcement.id}
+        isResolved={announcement.status === 'resolved'}
+        currentUser={announcement.author}
+        supabaseUrl={supabaseUrl}
+        supabaseKey={supabaseKey}
+        client:visible
+      />
+    </div>
+  </main>
+</Layout>

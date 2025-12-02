@@ -38,6 +38,8 @@ const AGE_RANGE_OPTIONS: { value: AnimalAgeRange; label: string }[] = [
   { value: 'senior', label: 'Starszy' },
 ];
 
+const ALL_OPTION_VALUE = '__all__';
+
 /**
  * Filter sidebar for desktop view.
  */
@@ -99,16 +101,17 @@ export function FilterSidebar({
 
       <FilterSection title="Gatunek">
         <Select
-          value={filters.species || ''}
-          onValueChange={(value) =>
-            onFilterChange('species', (value || undefined) as AnimalSpecies | undefined)
-          }
+          value={filters.species ?? ALL_OPTION_VALUE}
+          onValueChange={(value) => {
+            const nextValue = value === ALL_OPTION_VALUE ? undefined : (value as AnimalSpecies);
+            onFilterChange('species', nextValue);
+          }}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Wszystkie gatunki" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Wszystkie</SelectItem>
+            <SelectItem value={ALL_OPTION_VALUE}>Wszystkie</SelectItem>
             {SPECIES_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -129,16 +132,17 @@ export function FilterSidebar({
 
       <FilterSection title="Rozmiar">
         <Select
-          value={filters.size || ''}
-          onValueChange={(value) =>
-            onFilterChange('size', (value || undefined) as AnimalSize | undefined)
-          }
+          value={filters.size ?? ALL_OPTION_VALUE}
+          onValueChange={(value) => {
+            const nextValue = value === ALL_OPTION_VALUE ? undefined : (value as AnimalSize);
+            onFilterChange('size', nextValue);
+          }}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Wszystkie rozmiary" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Wszystkie</SelectItem>
+            <SelectItem value={ALL_OPTION_VALUE}>Wszystkie</SelectItem>
             {SIZE_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -159,16 +163,17 @@ export function FilterSidebar({
 
       <FilterSection title="Wiek">
         <Select
-          value={filters.age_range || ''}
-          onValueChange={(value) =>
-            onFilterChange('age_range', (value || undefined) as AnimalAgeRange | undefined)
-          }
+          value={filters.age_range ?? ALL_OPTION_VALUE}
+          onValueChange={(value) => {
+            const nextValue = value === ALL_OPTION_VALUE ? undefined : (value as AnimalAgeRange);
+            onFilterChange('age_range', nextValue);
+          }}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Wszystkie przedziały wiekowe" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Wszystkie</SelectItem>
+            <SelectItem value={ALL_OPTION_VALUE}>Wszystkie</SelectItem>
             {AGE_RANGE_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}

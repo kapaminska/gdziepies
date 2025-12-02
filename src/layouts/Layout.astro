@@ -1,24 +1,236 @@
 ---
 import "../styles/global.css";
+import { Header } from "../components/Header";
+import { Toaster } from "../components/ui/sonner";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "GdziePies" } = Astro.props;
+
+// Get user session for header
+// Handle errors gracefully - if getUser fails, user will be null
+const {
+  data: { user },
+  error: authError,
+} = await Astro.locals.supabase.auth.getUser();
+
+// Log error in dev mode for debugging
+if (authError && import.meta.env.DEV) {
+  console.error('Auth error in Layout:', authError);
+}
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
+    <>
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+      <meta http-equiv="Pragma" content="no-cache" />
+      <meta http-equiv="Expires" content="0" />
+    </>
     <title>{title}</title>
+    <script is:inline>
+      // CRITICAL: This must run BEFORE any other scripts load
+      // Comprehensive blocker for old SvelteKit paths - works on ALL pages via Layout.astro
+      (function() {
+        'use strict';
+        
+        const blockedPaths = [
+          '/manifest.json',
+          '/api/config',
+          '/_app/version.json',
+          '/_app/immutable/',
+          'manifest.json',
+          'api/config',
+          '_app/version.json',
+          '_app/immutable/',
+        ];
+        
+        function isBlocked(url) {
+          if (!url) return false;
+          const urlStr = typeof url === 'string' ? url : url?.href || url?.toString() || '';
+          const fullUrl = urlStr.startsWith('http') ? urlStr : window.location.origin + urlStr;
+          return blockedPaths.some(path => fullUrl.includes(path));
+        }
+        
+        // Intercept fetch - PRIMARY METHOD
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+          const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+          const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
+          
+          if (isBlocked(fullUrl)) {
+            console.warn('[BLOCKED] fetch:', fullUrl);
+            return Promise.reject(new Error('Blocked: This path is not available'));
+          }
+          
+          return originalFetch.apply(this, args);
+        };
+        
+        // Intercept XMLHttpRequest - FALLBACK METHOD
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          if (isBlocked(url)) {
+            console.warn('[BLOCKED] XMLHttpRequest:', url);
+            throw new Error('Blocked: This path is not available');
+          }
+          return originalXHROpen.call(this, method, url, ...rest);
+        };
+        
+        // Intercept link prefetch/preload - prevent loading old resources
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeName === 'LINK' && node.href) {
+                if (isBlocked(node.href)) {
+                  console.warn('[BLOCKED] link:', node.href);
+                  node.remove();
+                }
+              }
+            });
+          });
+        });
+        
+        // Start observing when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => {
+            observer.observe(document.head, { childList: true, subtree: true });
+          });
+        } else {
+          observer.observe(document.head, { childList: true, subtree: true });
+        }
+        
+        // Mark as intercepted
+        window.__fetchIntercepted = true;
+        window.__xhrIntercepted = true;
+      })();
+    </script>
   </head>
   <body>
+    <script is:inline>
+      // Aggressively clear service workers and cache on every page load
+      // This prevents old service workers from trying to fetch non-existent files
+      // Works on ALL pages via Layout.astro
+      (function() {
+        // Ensure interceptors are set (redundant check)
+        if (!window.__fetchIntercepted) {
+          const blockedPaths = [
+            '/manifest.json',
+            '/api/config',
+            '/_app/version.json',
+            '/_app/immutable/',
+            'manifest.json',
+            'api/config',
+            '_app/version.json',
+            '_app/immutable/',
+          ];
+          
+          function isBlocked(url) {
+            if (!url) return false;
+            const urlStr = typeof url === 'string' ? url : url?.href || url?.toString() || '';
+            const fullUrl = urlStr.startsWith('http') ? urlStr : window.location.origin + urlStr;
+            return blockedPaths.some(path => fullUrl.includes(path));
+          }
+          
+          const originalFetch = window.fetch;
+          window.fetch = function(...args) {
+            const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+            const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
+            
+            if (isBlocked(fullUrl)) {
+              console.warn('[BLOCKED] fetch:', fullUrl);
+              return Promise.reject(new Error('Blocked: This path is not available'));
+            }
+            
+            return originalFetch.apply(this, args);
+          };
+          window.__fetchIntercepted = true;
+        }
+        
+        // Clear service workers
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => {
+              registration.unregister().catch(() => {});
+            });
+          });
+          // Prevent new service workers from being registered
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error("Service workers are disabled"));
+          };
+        }
+        
+        // Clear all caches
+        if ("caches" in window) {
+          caches.keys().then((names) => {
+            names.forEach((name) => {
+              caches.delete(name).catch(() => {});
+            });
+          });
+        }
+        
+        // Clear localStorage if it contains old app data
+        try {
+          const localStorageKeys = Object.keys(localStorage);
+          localStorageKeys.forEach((key) => {
+            if (key.includes('_app') || key.includes('svelte') || key.includes('kit') || key.includes('manifest')) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (e) {
+          // Ignore errors
+        }
+        
+        // Clear sessionStorage if it contains old app data
+        try {
+          const sessionStorageKeys = Object.keys(sessionStorage);
+          sessionStorageKeys.forEach((key) => {
+            if (key.includes('_app') || key.includes('svelte') || key.includes('kit') || key.includes('manifest')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+        } catch (e) {
+          // Ignore errors
+        }
+        
+        // Clear IndexedDB if it contains old app data
+        if ('indexedDB' in window) {
+          try {
+            indexedDB.databases().then((databases) => {
+              databases.forEach((db) => {
+                if (db.name && (db.name.includes('_app') || db.name.includes('svelte') || db.name.includes('kit'))) {
+                  indexedDB.deleteDatabase(db.name).catch(() => {});
+                }
+              });
+            }).catch(() => {});
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+      })();
+    </script>
+    <script define:vars={{ supabaseUrl, supabaseKey }}>
+      // Inject Supabase config into window for client-side access
+      window.__SUPABASE_URL__ = supabaseUrl;
+      window.__SUPABASE_KEY__ = supabaseKey;
+    </script>
+    <Header
+      supabaseUrl={supabaseUrl}
+      supabaseKey={supabaseKey}
+      initialUser={user}
+      client:load
+    />
     <slot />
+    <Toaster client:only="react" richColors closeButton position="top-right" />
   </body>
 </html>
 

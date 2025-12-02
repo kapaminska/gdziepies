@@ -2,22 +2,30 @@
 import Layout from '../layouts/Layout.astro';
 import { AdForm } from '../components/announcements/AdForm';
 
-// Verify authentication
+// Try to get user, but don't redirect here - let AdForm handle it client-side
+// This allows the page to load and check auth in the browser
 const {
   data: { user },
-  error: authError,
 } = await Astro.locals.supabase.auth.getUser();
 
-if (authError || !user) {
-  return Astro.redirect('/logowanie');
-}
-
-const userId = user.id;
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
 ---
 
 <Layout title="Dodaj ogłoszenie">
   <main class="container mx-auto px-4 py-8">
-    <AdForm client:only="react" mode="create" userId={userId} />
+    <script define:vars={{ supabaseUrl, supabaseKey }}>
+      // Inject Supabase config into window for client-side access
+      window.__SUPABASE_URL__ = supabaseUrl;
+      window.__SUPABASE_KEY__ = supabaseKey;
+    </script>
+    <AdForm
+      client:only="react"
+      mode="create"
+      initialUserId={user?.id}
+      supabaseUrl={supabaseUrl}
+      supabaseKey={supabaseKey}
+    />
   </main>
 </Layout>
 

@@ -10,9 +10,21 @@ import node from "@astrojs/node";
 export default defineConfig({
   output: "server",
   integrations: [react(), sitemap()],
-  server: { port: 3000 },
+  server: {
+    port: 3000,
+    hmr: {
+      protocol: "ws",
+      host: "localhost",
+      port: 3000,
+    },
+  },
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      hmr: {
+        clientPort: 3000,
+      },
+    },
   },
   adapter: node({
     mode: "standalone",

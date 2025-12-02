@@ -1,0 +1,128 @@
+---
+import type { AnnouncementDto } from '@/types';
+
+interface Props {
+  announcement: AnnouncementDto;
+}
+
+const { announcement } = Astro.props;
+
+// Format date to Polish locale
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('pl-PL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+// Format enum values to Polish
+function formatSpecies(species: 'dog' | 'cat'): string {
+  return species === 'dog' ? 'Pies' : 'Kot';
+}
+
+function formatSize(size: 'small' | 'medium' | 'large' | null): string {
+  if (!size) return '';
+  const sizeMap: Record<string, string> = {
+    small: 'Mały',
+    medium: 'Średni',
+    large: 'Duży',
+  };
+  return sizeMap[size] || size;
+}
+
+function formatAgeRange(ageRange: 'young' | 'adult' | 'senior' | null): string {
+  if (!ageRange) return '';
+  const ageMap: Record<string, string> = {
+    young: 'Młody',
+    adult: 'Dorosły',
+    senior: 'Starszy',
+  };
+  return ageMap[ageRange] || ageRange;
+}
+
+const formattedDate = formatDate(announcement.event_date);
+const location = `${announcement.poviat}, ${announcement.voivodeship}`;
+---
+
+<article class="space-y-6">
+  <header>
+    <h1 class="text-3xl font-bold tracking-tight">{announcement.title}</h1>
+  </header>
+
+  <dl class="space-y-4">
+    <div>
+      <dt class="font-semibold text-muted-foreground mb-1">Lokalizacja</dt>
+      <dd class="text-base">
+        <p>{location}</p>
+        {announcement.location_details && (
+          <p class="text-sm text-muted-foreground mt-1">
+            {announcement.location_details}
+          </p>
+        )}
+      </dd>
+    </div>
+
+    <div>
+      <dt class="font-semibold text-muted-foreground mb-1">Data zdarzenia</dt>
+      <dd class="text-base">{formattedDate}</dd>
+    </div>
+
+    <div>
+      <dt class="font-semibold text-muted-foreground mb-1">Gatunek</dt>
+      <dd class="text-base">{formatSpecies(announcement.species)}</dd>
+    </div>
+
+    {announcement.size && (
+      <div>
+        <dt class="font-semibold text-muted-foreground mb-1">Rozmiar</dt>
+        <dd class="text-base">{formatSize(announcement.size)}</dd>
+      </div>
+    )}
+
+    {announcement.age_range && (
+      <div>
+        <dt class="font-semibold text-muted-foreground mb-1">Wiek</dt>
+        <dd class="text-base">{formatAgeRange(announcement.age_range)}</dd>
+      </div>
+    )}
+
+    {announcement.color && (
+      <div>
+        <dt class="font-semibold text-muted-foreground mb-1">Kolor</dt>
+        <dd class="text-base">{announcement.color}</dd>
+      </div>
+    )}
+
+    {announcement.description && (
+      <div>
+        <dt class="font-semibold text-muted-foreground mb-1">Opis</dt>
+        <dd class="text-base whitespace-pre-wrap">{announcement.description}</dd>
+      </div>
+    )}
+
+    {announcement.special_marks && (
+      <div>
+        <dt class="font-semibold text-muted-foreground mb-1">Znaki szczególne</dt>
+        <dd class="text-base whitespace-pre-wrap">{announcement.special_marks}</dd>
+      </div>
+    )}
+  </dl>
+
+  {(announcement.is_aggressive || announcement.is_fearful) && (
+    <div class="flex gap-2 pt-2">
+      {announcement.is_aggressive && (
+        <span class="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
+          Może być agresywne
+        </span>
+      )}
+      {announcement.is_fearful && (
+        <span class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+          Lękliwe
+        </span>
+      )}
+    </div>
+  )}
+</article>
+

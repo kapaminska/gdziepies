@@ -1,5 +1,13 @@
 ---
-import { Button } from "@/components/ui/button";
+import { HeroButtons } from "@/components/HeroButtons";
+
+// Get user session for initial state
+const {
+  data: { user },
+} = await Astro.locals.supabase.auth.getUser();
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
 ---
 
 <header class="w-full py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/20">
@@ -11,29 +19,17 @@ import { Button } from "@/components/ui/button";
       Jeśli zgubiłeś swojego pupila lub znalazłeś zwierzę, które potrzebuje pomocy, 
       jesteśmy tutaj, aby pomóc w połączeniu właścicieli z ich ukochanymi zwierzętami.
     </p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-      <Button 
-        asChild
-        size="lg"
-        class="w-full sm:w-auto min-w-[200px] text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
-        aria-label="Zgubiłem zwierzę - dodaj ogłoszenie"
-      >
-        <a href="/dodaj-ogloszenie?type=lost">
-          Zgubiłem
-        </a>
-      </Button>
-      <Button 
-        asChild
-        size="lg"
-        variant="outline"
-        class="w-full sm:w-auto min-w-[200px] text-base font-semibold border-2 border-foreground/20 hover:bg-accent hover:border-foreground/30 focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:ring-offset-2 transition-all"
-        aria-label="Znalazłem zwierzę - dodaj ogłoszenie"
-      >
-        <a href="/dodaj-ogloszenie?type=found">
-          Znalazłem
-        </a>
-      </Button>
-    </div>
+    <script define:vars={{ supabaseUrl, supabaseKey }}>
+      // Inject Supabase config into window for client-side access
+      window.__SUPABASE_URL__ = supabaseUrl;
+      window.__SUPABASE_KEY__ = supabaseKey;
+    </script>
+    <HeroButtons
+      supabaseUrl={supabaseUrl}
+      supabaseKey={supabaseKey}
+      initialUser={user}
+      client:load
+    />
   </div>
 </header>
 

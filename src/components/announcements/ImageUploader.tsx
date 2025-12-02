@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { Button } from '@/components/ui/button';
-import { supabaseClient } from '@/db/supabase.client';
 import { StorageService } from '@/lib/services/storage.service';
+import type { Database } from '@/db/database.types';
 
 interface ImageUploaderProps {
   value?: string; // Current image URL (for edit mode)
@@ -12,6 +13,7 @@ interface ImageUploaderProps {
   userId: string;
   announcementId?: string; // For edit mode
   disabled?: boolean;
+  supabaseClient: SupabaseClient<Database>;
 }
 
 export function ImageUploader({
@@ -21,6 +23,7 @@ export function ImageUploader({
   userId,
   announcementId,
   disabled = false,
+  supabaseClient,
 }: ImageUploaderProps) {
   const [preview, setPreview] = useState<string | null>(value || null);
   const [isUploading, setIsUploading] = useState(false);
@@ -70,7 +73,7 @@ export function ImageUploader({
         setIsUploading(false);
       }
     },
-    [disabled, isUploading, userId, announcementId, onChange, onError]
+    [disabled, isUploading, userId, announcementId, supabaseClient, onChange, onError]
   );
 
   const handleDrop = useCallback(

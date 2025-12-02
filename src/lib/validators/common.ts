@@ -8,3 +8,4 @@ export const uuidSchema = z.string().uuid({
   message: 'Nieprawidłowy format UUID',
 });
 
+

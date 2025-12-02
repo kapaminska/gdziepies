@@ -106,3 +106,4 @@ Sprawdź, czy:
 
 ⚠️ **UWAGA:** Service role key ma pełny dostęp do bazy danych i omija wszystkie polityki RLS. Używaj go tylko w bezpiecznym środowisku (lokalnie lub w zaufanych skryptach). Nigdy nie commituj service role key do repozytorium!
 
+

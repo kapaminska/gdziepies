@@ -9,7 +9,9 @@ type SupabaseClientType = SupabaseClient<Database>;
  */
 export class StorageService {
   private static readonly BUCKET_NAME = 'announcements';
+  private static readonly AVATAR_BUCKET_NAME = 'avatars';
   private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  private static readonly MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
   private static readonly ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
   /**
@@ -90,6 +92,78 @@ export class StorageService {
     if (error) {
       throw new Error(`Błąd podczas usuwania pliku: ${error.message}`);
     }
+  }
+
+  /**
+   * Uploads an avatar image file to Supabase Storage.
+   * Deletes the previous avatar if it exists before uploading the new one.
+   * @param file - The image file to upload
+   * @param userId - The ID of the user uploading the file
+   * @param supabaseClient - Supabase client instance
+   * @returns The public URL of the uploaded avatar
+   * @throws Error if upload fails
+   */
+  static async uploadAvatar(
+    file: File,
+    userId: string,
+    supabaseClient: SupabaseClientType
+  ): Promise<string> {
+    // Validate file type
+    if (!this.ALLOWED_MIME_TYPES.includes(file.type)) {
+      throw new Error('Nieprawidłowy typ pliku. Dozwolone formaty: JPG, PNG');
+    }
+
+    // Validate file size
+    if (file.size > this.MAX_AVATAR_SIZE) {
+      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar: 2MB');
+    }
+
+    // Determine file extension
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const filePath = `${userId}/avatar.${fileExtension}`;
+
+    // Delete previous avatar if exists
+    const { data: existingFiles } = await supabaseClient.storage
+      .from(this.AVATAR_BUCKET_NAME)
+      .list(userId);
+
+    if (existingFiles && existingFiles.length > 0) {
+      // Find and delete existing avatar files
+      const avatarFiles = existingFiles.filter((f) => f.name.startsWith('avatar.'));
+      if (avatarFiles.length > 0) {
+        const filesToDelete = avatarFiles.map((f) => `${userId}/${f.name}`);
+        await supabaseClient.storage
+          .from(this.AVATAR_BUCKET_NAME)
+          .remove(filesToDelete);
+      }
+    }
+
+    // Upload file
+    const { data, error } = await supabaseClient.storage
+      .from(this.AVATAR_BUCKET_NAME)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true, // Allow overwriting
+      });
+
+    if (error) {
+      throw new Error(`Błąd podczas przesyłania avatara: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('Nie udało się przesłać avatara');
+    }
+
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = supabaseClient.storage.from(this.AVATAR_BUCKET_NAME).getPublicUrl(filePath);
+
+    if (!publicUrl) {
+      throw new Error('Nie udało się pobrać publicznego URL avatara');
+    }
+
+    return publicUrl;
   }
 
   /**
@@ -176,4 +250,5 @@ export class StorageService {
     });
   }
 }
+
 

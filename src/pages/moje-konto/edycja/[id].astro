@@ -1,18 +1,8 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { AdForm } from '../../../components/announcements/AdForm';
-import { AnnouncementService } from '../../../lib/services/announcement.service';
-import { NotFoundError } from '../../../lib/errors';
+import { EditAnnouncementGuard } from '../../../components/announcements/EditAnnouncementGuard';
 
-// Verify authentication
-const {
-  data: { user },
-  error: authError,
-} = await Astro.locals.supabase.auth.getUser();
-
-if (authError || !user) {
-  return Astro.redirect('/logowanie');
-}
+export const prerender = false;
 
 const { id } = Astro.params;
 
@@ -20,36 +10,25 @@ if (!id) {
   return Astro.redirect('/moje-konto');
 }
 
-// Get announcement data
-let announcement;
-try {
-  announcement = await AnnouncementService.getAnnouncementById(
-    id,
-    Astro.locals.supabase
-  );
-} catch (error) {
-  if (error instanceof NotFoundError) {
-    return Astro.redirect('/moje-konto');
-  }
-  throw error;
-}
-
-// Verify ownership
-if (announcement.author_id !== user.id) {
-  return Astro.redirect('/moje-konto');
-}
-
-const userId = user.id;
+// Pass Supabase config to client component
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
 ---
 
 <Layout title="Edytuj ogłoszenie">
   <main class="container mx-auto px-4 py-8">
-    <AdForm
-      client:only="react"
-      mode="edit"
-      initialData={announcement}
-      userId={userId}
+    <script define:vars={{ supabaseUrl, supabaseKey }}>
+      // Inject Supabase config into window for client-side access
+      window.__SUPABASE_URL__ = supabaseUrl;
+      window.__SUPABASE_KEY__ = supabaseKey;
+    </script>
+    <EditAnnouncementGuard
+      client:load
+      announcementId={id}
+      supabaseUrl={supabaseUrl}
+      supabaseKey={supabaseKey}
     />
   </main>
 </Layout>
+
 

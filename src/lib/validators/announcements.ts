@@ -82,6 +82,10 @@ export const getAnnouncementsQuerySchema = z
     event_date_from: isoDateSchema.optional(),
     event_date_to: isoDateSchema.optional(),
     status: announcementStatusSchema.optional().default('active'),
+    author_id: z
+      .string()
+      .uuid({ message: 'Nieprawidłowy identyfikator użytkownika' })
+      .optional(),
     page: z
       .string()
       .optional()

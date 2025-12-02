@@ -58,3 +58,4 @@ WHERE nspname IN ('auth', 'public');
 -- To powinno zwrócić błąd jeśli nie ma dostępu
 SELECT COUNT(*) FROM auth.users LIMIT 1;
 
+

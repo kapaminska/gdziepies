@@ -169,6 +169,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           id: string
           phone_number: string | null
@@ -176,6 +177,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           id: string
           phone_number?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           username: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           id?: string
           phone_number?: string | null
@@ -241,16 +244,19 @@ export type Database = {
     Views: {
       profiles_public: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           id: string | null
           username: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           id?: string | null
           username?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           id?: string | null
           username?: string | null
@@ -262,7 +268,8 @@ export type Database = {
       get_contact_details: {
         Args: { p_announcement_id: string }
         Returns: {
-          phone_number: string
+          email: string | null
+          phone_number: string | null
         }[]
       }
     }
