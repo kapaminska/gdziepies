@@ -1,8 +1,31 @@
-# Supabase
-.branches
-.temp
+# Supabase CLI generated files
+.branches/
+.temp/
+.seed/
+.functions/
+
+# Supabase local development
+.docker/
+supabase/.env
+supabase/.env.local
+supabase/.env.*.local
+
+# Supabase types (if generated locally)
+types/
 
 # dotenvx
 .env.keys
 .env.local
 .env.*.local
+
+# OS files
+.DS_Store
+._*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

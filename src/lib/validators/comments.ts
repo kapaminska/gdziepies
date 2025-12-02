@@ -19,9 +19,9 @@ export const addCommentSchema = z.object({
   announcement_id: uuidSchema,
   content: z
     .string()
+    .trim()
     .min(1, 'Treść komentarza nie może być pusta')
-    .max(5000, 'Treść komentarza nie może przekraczać 5000 znaków')
-    .trim(),
+    .max(5000, 'Treść komentarza nie może przekraczać 5000 znaków'),
   is_sighting: z.boolean().optional().default(false),
 });
 

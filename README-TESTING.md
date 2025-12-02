@@ -1,115 +1,222 @@
-# Testowanie API Endpointów
+# Testing Guide
 
-Ten dokument opisuje jak testować endpointy API dla ogłoszeń.
+Ten projekt używa dwóch głównych narzędzi do testowania:
 
-## Wymagania
+## Testy Jednostkowe (Vitest)
 
-1. **Uruchomiony serwer deweloperski Astro:**
-   ```bash
-   npm run dev
-   ```
-   Serwer powinien działać na `http://localhost:3000` (domyślnie).
+### Instalacja i Konfiguracja
 
-2. **Skonfigurowane zmienne środowiskowe:**
-   - `SUPABASE_URL` - URL do Supabase
-   - `SUPABASE_KEY` - Klucz anonimowy Supabase
+Środowisko testowe jest już skonfigurowane. Używa:
+- **Vitest** - framework testowy
+- **React Testing Library** - do testowania komponentów React
+- **jsdom** - środowisko DOM dla testów
 
-## Uruchomienie testów
+### Struktura Testów
 
-### Podstawowe użycie
+Testy jednostkowe znajdują się w katalogu `src/` i mają rozszerzenie `.test.ts` lub `.test.tsx`:
+
+```
+src/
+  components/
+    button.test.tsx
+  lib/
+    utils.test.ts
+  test/
+    setup.ts          # Globalna konfiguracja testów
+```
+
+### Uruchamianie Testów
 
 ```bash
-npm run test:api
+# Uruchom wszystkie testy
+npm run test
+
+# Tryb watch (automatyczne uruchamianie przy zmianach)
+npm run test:watch
+
+# UI mode (wizualny interfejs)
+npm run test:ui
+
+# Z raportem pokrycia kodu
+npm run test:coverage
+
+# Jednorazowe uruchomienie wszystkich testów
+npm run test:unit
 ```
 
-### Z niestandardowym URL
+### Pisanie Testów
+
+Przykład testu komponentu React:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { Button } from '@/components/ui/button';
+
+describe('Button', () => {
+  it('should render button with text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+});
+```
+
+### Mockowanie
+
+Vitest używa obiektu `vi` do mockowania:
+
+```typescript
+import { vi } from 'vitest';
+
+// Mock funkcji
+const mockFn = vi.fn();
+
+// Mock modułu
+vi.mock('@/lib/api/announcements', () => ({
+  fetchAnnouncements: vi.fn(),
+}));
+
+// Spy na istniejącej funkcji
+vi.spyOn(console, 'log');
+```
+
+## Testy E2E (Playwright)
+
+### Instalacja i Konfiguracja
+
+Playwright jest skonfigurowany do używania tylko przeglądarki Chromium (Desktop Chrome).
+
+### Struktura Testów
+
+Testy E2E znajdują się w katalogu `e2e/`:
+
+```
+e2e/
+  auth/
+    login.spec.ts
+  announcements/
+    create.spec.ts
+  fixtures/
+    test-user.ts      # Page Object Model helpers
+```
+
+### Uruchamianie Testów E2E
 
 ```bash
-npm run test:api -- --base-url http://localhost:3000
+# Uruchom wszystkie testy E2E
+npm run test:e2e
+
+# UI mode (wizualny interfejs)
+npm run test:e2e:ui
+
+# Tryb debugowania
+npm run test:e2e:debug
+
+# Codegen (generowanie testów przez nagrywanie)
+npm run test:e2e:codegen
 ```
 
-Lub używając zmiennej środowiskowej:
+### Pisanie Testów E2E
+
+Przykład testu E2E:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Homepage', () => {
+  test('should load successfully', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveTitle(/.*/);
+  });
+});
+```
+
+### Page Object Model
+
+Zalecane jest użycie Page Object Model dla lepszej organizacji testów:
+
+```typescript
+// e2e/fixtures/login-page.ts
+import { Page, Locator } from '@playwright/test';
+
+export class LoginPage {
+  readonly page: Page;
+  readonly emailInput: Locator;
+  readonly passwordInput: Locator;
+  readonly submitButton: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.emailInput = page.locator('input[type="email"]');
+    this.passwordInput = page.locator('input[type="password"]');
+    this.submitButton = page.locator('button[type="submit"]');
+  }
+
+  async goto() {
+    await this.page.goto('/logowanie');
+  }
+
+  async login(email: string, password: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.submitButton.click();
+  }
+}
+```
+
+### Visual Comparison
+
+Playwright wspiera porównywanie wizualne:
+
+```typescript
+test('should match screenshot', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveScreenshot('homepage.png');
+});
+```
+
+### Trace Viewer
+
+Gdy test się nie powiedzie, możesz użyć trace viewer do debugowania:
 
 ```bash
-API_BASE_URL=http://localhost:3000 npm run test:api
+npx playwright show-trace trace.zip
 ```
 
-## Testowane scenariusze
+## Best Practices
 
-### Publiczne endpointy (bez autoryzacji)
+### Testy Jednostkowe
 
-1. ✅ **GET /api/announcements** - Lista ogłoszeń bez filtrów
-2. ✅ **GET /api/announcements?type=lost&species=dog** - Lista z filtrami
-3. ✅ **GET /api/announcements?type=invalid** - Walidacja nieprawidłowych filtrów (400)
-4. ✅ **GET /api/announcements/{id}** - Szczegóły ogłoszenia
-5. ✅ **GET /api/announcements/{invalid-uuid}** - Walidacja UUID (400)
-6. ✅ **GET /api/announcements/{non-existent-id}** - Nieistniejące ogłoszenie (404)
+1. **Używaj opisowych nazw testów** - `it('should display error when form is invalid')`
+2. **Testuj zachowanie, nie implementację** - skup się na tym, co użytkownik widzi i robi
+3. **Używaj Arrange-Act-Assert pattern**
+4. **Mockuj zewnętrzne zależności** - API, baza danych, itp.
+5. **Używaj `vi.fn()` i `vi.spyOn()` zamiast kompleksowych mocków**
 
-### Chronione endpointy (wymagają autoryzacji)
+### Testy E2E
 
-7. ✅ **POST /api/announcements** - Tworzenie bez autoryzacji (401)
-8. ✅ **POST /api/announcements** - Nieprawidłowe dane (400/401)
-9. ✅ **PATCH /api/announcements/{id}** - Aktualizacja bez autoryzacji (401)
-10. ✅ **DELETE /api/announcements/{id}** - Usuwanie bez autoryzacji (401)
+1. **Używaj Page Object Model** - dla lepszej organizacji i reużywalności
+2. **Używaj locatorów zamiast selektorów CSS** - bardziej odporne na zmiany
+3. **Izoluj testy** - każdy test powinien być niezależny
+4. **Używaj browser contexts** - dla izolacji środowiska testowego
+5. **Testuj krytyczne ścieżki użytkownika** - logowanie, tworzenie ogłoszeń, itp.
 
-## Przykładowe wyniki
+## CI/CD
 
-```
-🚀 Starting API Tests...
-Base URL: http://localhost:4321
+Testy mogą być uruchamiane w CI/CD:
 
-🧪 Testing: GET /api/announcements - Lista ogłoszeń (bez filtrów)
-✅ Status: 200, Items: 5
+```yaml
+# Przykład dla GitHub Actions
+- name: Run unit tests
+  run: npm run test:unit
 
-🧪 Testing: GET /api/announcements - Lista z filtrami
-✅ Status: 200
-
-...
-
-📊 Test Summary
-============================================================
-Total: 10
-Passed: 10
-Failed: 0
-============================================================
+- name: Run E2E tests
+  run: npm run test:e2e
 ```
 
-## Testowanie z autoryzacją
+## Wsparcie
 
-Aby przetestować endpointy wymagające autoryzacji (POST, PATCH, DELETE), musisz:
-
-1. **Uzyskać token JWT z Supabase Auth:**
-   - Zaloguj się przez Supabase Auth
-   - Pobierz token z sesji
-
-2. **Zmodyfikować skrypt testowy:**
-   - Dodaj token do nagłówka `Authorization: Bearer <token>`
-   - Utwórz testy dla autoryzowanych użytkowników
-
-## Rozszerzanie testów
-
-Możesz rozszerzyć skrypt `scripts/test-api.js` o dodatkowe testy:
-
-- Testy z prawdziwą autoryzacją
-- Testy aktualizacji własnych ogłoszeń
-- Testy próby aktualizacji cudzych ogłoszeń (403)
-- Testy usuwania ogłoszeń
-- Testy paginacji
-- Testy sortowania
-
-## Troubleshooting
-
-### Błąd: "fetch failed" lub "ECONNREFUSED"
-- Upewnij się, że serwer Astro jest uruchomiony (`npm run dev`)
-- Sprawdź, czy URL jest poprawny (domyślnie `http://localhost:3000`)
-- Jeśli aplikacja działa na innym porcie, użyj: `npm run test:api -- --base-url http://localhost:<PORT>`
-
-### Błąd: "401 Unauthorized" dla publicznych endpointów
-- Sprawdź konfigurację Supabase RLS policies
-- Upewnij się, że endpointy są publiczne
-
-### Błąd: "500 Internal Server Error"
-- Sprawdź logi serwera Astro
-- Sprawdź konfigurację zmiennych środowiskowych
-- Sprawdź połączenie z bazą danych Supabase
-
+W razie problemów:
+- Sprawdź dokumentację [Vitest](https://vitest.dev/)
+- Sprawdź dokumentację [Playwright](https://playwright.dev/)
+- Sprawdź dokumentację [React Testing Library](https://testing-library.com/react)

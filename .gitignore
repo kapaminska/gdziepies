@@ -1,24 +1,80 @@
-# build output
-dist/
-
-# generated types
-.astro/
-
-# dependencies
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
-# logs
+# Build outputs
+dist/
+.astro/
+.output/
+.vercel/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# environment variables
-.env
-.env.production
-
-# macOS-specific files
+# OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
 
-# jetbrains setting folder
+# IDE
+.vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+.cursor/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Vitest
+.vitest/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Optional stylelint cache
+.stylelintcache
+
+# Misc
+*.pem

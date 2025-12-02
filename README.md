@@ -9,6 +9,12 @@ A modern, opinionated starter template for building fast, accessible, and AI-fri
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
 
+### Testing
+
+- [Vitest](https://vitest.dev/) - Fast unit test framework powered by Vite
+- [React Testing Library](https://testing-library.com/react) - Simple and complete testing utilities for React components
+- [Playwright](https://playwright.dev/) - End-to-end testing framework for reliable web applications
+
 ## Prerequisites
 
 - Node.js v22.14.0 (as specified in `.nvmrc`)
@@ -48,6 +54,10 @@ npm run build
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
+- `npm run test` - Run unit tests with Vitest
+- `npm run test:watch` - Run unit tests in watch mode
+- `npm run test:e2e` - Run end-to-end tests with Playwright
+- `npm run test:api` - Run API endpoint tests
 
 ## Project Structure
 

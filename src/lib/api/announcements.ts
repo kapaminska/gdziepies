@@ -17,7 +17,7 @@ export interface AnnouncementsApiResponse {
 /**
  * Format a Date object to ISO date string (YYYY-MM-DD).
  */
-function formatDate(date: Date): string {
+export function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -27,7 +27,7 @@ function formatDate(date: Date): string {
 /**
  * Build query string from filter parameters.
  */
-function buildQueryString(params: FetchAnnouncementsParams): string {
+export function buildQueryString(params: FetchAnnouncementsParams): string {
   const searchParams = new URLSearchParams();
 
   // Map filter state to API query parameters
