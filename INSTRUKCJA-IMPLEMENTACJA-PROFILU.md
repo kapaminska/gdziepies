@@ -229,3 +229,5 @@ npm run dev
 
 Po wykonaniu wszystkich kroków, funkcjonalność profilu użytkownika powinna działać poprawnie. Jeśli napotkasz jakiekolwiek problemy, sprawdź sekcję "Rozwiązywanie problemów" powyżej.
 
+
+

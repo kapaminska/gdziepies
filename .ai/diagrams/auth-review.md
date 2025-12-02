@@ -145,3 +145,5 @@ Zalecam wprowadzenie następujących poprawek:
 
 Po wprowadzeniu tych poprawek diagram będzie w pełni zgodny z dokumentacją i rzeczywistą implementacją.
 
+
+

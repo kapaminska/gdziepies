@@ -29,3 +29,5 @@ comment on view public.profiles_public is
 -- zwykłe uprawnienia (grant) na widok – rls jest egzekwowane na tabeli bazowej
 grant select on public.profiles_public to anon, authenticated;
 
+
+

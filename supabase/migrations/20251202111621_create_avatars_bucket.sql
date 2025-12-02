@@ -57,3 +57,5 @@ create policy "avatars_delete_authenticated"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+
+

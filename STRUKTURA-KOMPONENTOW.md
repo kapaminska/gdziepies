@@ -413,3 +413,5 @@ React Component (client-side)
 5. **DashboardGuard** - Chroni strony wymagające autoryzacji
 6. **UI Components** - Wszystkie komponenty UI są podstawą dla innych komponentów
 
+
+
