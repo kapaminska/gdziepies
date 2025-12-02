@@ -58,6 +58,18 @@ const mapSupabaseError = (error: { message?: string } | null): string => {
     return 'Adres e-mail nie został potwierdzony. Sprawdź swoją skrzynkę pocztową.';
   }
 
+  if (message.includes('email not found') || message.includes('user not found')) {
+    return 'Nie znaleziono użytkownika o podanym adresie e-mail';
+  }
+
+  if (message.includes('token expired') || message.includes('expired')) {
+    return 'Link resetujący hasło wygasł. Wyślij nowy link.';
+  }
+
+  if (message.includes('invalid token') || (message.includes('invalid') && message.includes('token'))) {
+    return 'Nieprawidłowy link resetujący hasło.';
+  }
+
   if (message.includes('network') || message.includes('fetch')) {
     return 'Wystąpił problem z połączeniem. Spróbuj ponownie później.';
   }
@@ -293,7 +305,7 @@ export function AuthForm({ mode, supabaseUrl, supabaseKey, redirectTo }: AuthFor
               </a>
             </p>
             <p className="text-sm text-muted-foreground text-center">
-              <a href="#" className="text-primary hover:underline">
+              <a href="/odzyskiwanie-hasla" className="text-primary hover:underline">
                 Zapomniałeś hasła?
               </a>
             </p>

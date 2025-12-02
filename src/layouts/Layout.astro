@@ -16,9 +16,16 @@ const {
   error: authError,
 } = await Astro.locals.supabase.auth.getUser();
 
-// Log error in dev mode for debugging
+// Log error in dev mode for debugging (but ignore AuthSessionMissingError - it's normal for logged-out users)
 if (authError && import.meta.env.DEV) {
-  console.error('Auth error in Layout:', authError);
+  // AuthSessionMissingError is expected when user is not logged in - don't log it as error
+  const isSessionMissingError = authError.message?.includes('Auth session missing') || 
+                                authError.name === 'AuthSessionMissingError' ||
+                                (authError as any).__isAuthError && (authError as any).status === 400;
+  
+  if (!isSessionMissingError) {
+    console.error('Auth error in Layout:', authError);
+  }
 }
 
 const supabaseUrl = import.meta.env.SUPABASE_URL;

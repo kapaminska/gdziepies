@@ -8,15 +8,107 @@ Moduł autentykacji w aplikacji GdziePies wykorzystuje Supabase Auth do zarządz
 
 - **US-001**: Rejestracja nowego użytkownika (email + hasło)
 - **US-002**: Logowanie użytkownika (email + hasło)
+- **Wylogowanie**: Możliwość wylogowania się z systemu (wymaganie z PRD sekcja 3.1)
 - **US-003**: Przeglądanie ogłoszeń przez niezalogowanego użytkownika (z ograniczeniami)
+- **US-005**: Dodawanie nowego ogłoszenia (wymaga autoryzacji)
 - **US-006**: Zarządzanie własnymi ogłoszeniami (wymaga autoryzacji)
-- **US-008**: Dodawanie komentarza pod ogłoszeniem (wymaga autoryzacji)
+- **US-007**: Oznaczanie ogłoszenia jako "ZNALEZIONE" (wymaga autoryzacji - tylko autor może oznaczyć)
+- **US-008**: Dodawanie komentarza pod ogłoszeniem (wymaga autoryzacji, zablokowane dla ogłoszeń "ZNALEZIONE")
 - **US-009**: Zgłaszanie, że zwierzę było widziane (wymaga autoryzacji)
 - **US-010**: Dostęp do danych kontaktowych (tylko dla zalogowanych)
 
-### 1.2. Dodatkowe wymagania (niezaimplementowane)
+### 1.2. Status implementacji
 
-- **Odzyskiwanie hasła**: Funkcjonalność resetowania hasła przez e-mail (link w AuthForm istnieje, ale nie prowadzi do implementacji)
+#### ✅ Zaimplementowane i działające
+
+**Podstawowe funkcje autoryzacji:**
+- ✅ **US-001**: Rejestracja użytkownika (email + hasło)
+- ✅ **US-002**: Logowanie użytkownika (email + hasło)
+- ✅ **Wylogowanie**: Pełna funkcjonalność wylogowania
+- ✅ **Middleware autoryzacji**: Ekstrakcja tokenu z cookies/nagłówków
+- ✅ **Synchronizacja stanu**: `onAuthStateChange` w komponentach
+- ✅ **Singleton pattern**: Klient Supabase z `supabase-client-factory.ts`
+
+**Ochrona zasobów:**
+- ✅ **US-005**: Dodawanie ogłoszeń (wymaga autoryzacji)
+- ✅ **US-006**: Zarządzanie ogłoszeniami (wymaga autoryzacji)
+- ✅ **US-007**: Oznaczanie jako "ZNALEZIONE" (wymaga autoryzacji, blokuje komentarze)
+- ✅ **US-008**: Dodawanie komentarzy (wymaga autoryzacji)
+- ✅ **US-009**: Zgłaszanie "widziałem zwierzę" (wymaga autoryzacji)
+- ✅ **US-010**: Dostęp do danych kontaktowych (tylko dla zalogowanych)
+
+**Komponenty UI:**
+- ✅ `AuthForm.tsx` - formularz logowania/rejestracji
+- ✅ `Header.tsx` - nawigacja z menu użytkownika
+- ✅ `DashboardGuard.tsx` - ochrona stron wymagających autoryzacji
+- ✅ `ContactReveal.tsx` - ujawnianie danych kontaktowych
+- ✅ `CommentForm.tsx` - formularz komentarzy (z blokadą dla "ZNALEZIONE")
+- ✅ `AdForm.tsx` - formularz dodawania/edycji ogłoszeń
+
+**Strony:**
+- ✅ `/logowanie` - strona logowania
+- ✅ `/rejestracja` - strona rejestracji
+- ✅ `/moje-konto` - dashboard użytkownika (chroniony)
+- ✅ `/dodaj-ogloszenie` - dodawanie ogłoszeń (chroniony)
+
+**Walidacja i bezpieczeństwo:**
+- ✅ Schematy Zod (`loginSchema`, `registerSchema`)
+- ✅ Mapowanie błędów Supabase na komunikaty po polsku
+- ✅ RLS (Row Level Security) w bazie danych
+- ✅ Walidacja tokenów w middleware
+
+#### 🔄 Do zaimplementowania
+
+**Odzyskiwanie hasła (główna brakująca funkcjonalność):**
+
+**Komponenty React:**
+- 🔄 `src/components/auth/PasswordResetForm.tsx` - formularz inicjacji resetu hasła
+- 🔄 `src/components/auth/PasswordResetConfirmForm.tsx` - formularz potwierdzenia resetu hasła
+
+**Strony Astro:**
+- 🔄 `src/pages/odzyskiwanie-hasla.astro` - strona inicjacji resetu hasła
+- 🔄 `src/pages/reset-hasla.astro` - strona potwierdzenia resetu hasła
+
+**Rozszerzenia istniejących plików:**
+- 🔄 `src/components/auth/AuthForm.tsx` - zmiana linku "Zapomniałeś hasła?" z `#` na `/odzyskiwanie-hasla` (linia 296)
+- 🔄 `src/components/auth/auth-schema.ts` - dodanie schematów:
+  - `passwordResetSchema` (walidacja email)
+  - `passwordResetConfirmSchema` (walidacja password + confirmPassword)
+
+**Integracja z Supabase Auth:**
+- 🔄 Wywołanie `client.auth.resetPasswordForEmail()` w `PasswordResetForm`
+- 🔄 Wywołanie `client.auth.updateUser({ password })` w `PasswordResetConfirmForm`
+
+**Konfiguracja Supabase (poza kodem):**
+- 🔄 Dostosowanie szablonu e-mail resetu hasła do języka polskiego
+- 🔄 Ustawienie `redirectTo` na `/reset-hasla` w konfiguracji Supabase
+
+**Testy:**
+- 🔄 Testy manualne przepływu resetu hasła
+- 🔄 Testy błędów (nieprawidłowy email, wygasły token, itp.)
+
+#### 🔧 Opcjonalne ulepszenia (niekrytyczne)
+
+**Obsługa błędów:**
+- 🔧 Rozszerzenie `mapSupabaseError` o błędy resetu hasła (opcjonalne)
+- 🔧 Lepsza obsługa przypadku "email niepotwierdzony" (możliwość ponownego wysłania)
+
+**Walidacja:**
+- 🔧 Dodanie walidacji siły hasła (oprócz minimum 6 znaków)
+- 🔧 Walidacja formatu telefonu w profilu użytkownika (jeśli wymagana)
+
+**UX:**
+- 🔧 Wyświetlanie komunikatu sukcesu po rejestracji (obecnie tylko przekierowanie)
+- 🔧 Wyświetlanie komunikatu sukcesu po resetowaniu hasła
+- 🔧 Ulepszenie loading states w komponentach autoryzacji
+
+**Konfiguracja Supabase:**
+- 🔧 Decyzja, czy wymagać potwierdzenia e-mail przed logowaniem
+- 🔧 Jeśli tak, dodanie funkcjonalności ponownego wysłania e-maila weryfikacyjnego
+
+### 1.3. Dodatkowe wymagania (niezaimplementowane)
+
+- **Odzyskiwanie hasła**: Funkcjonalność resetowania hasła przez e-mail (link w AuthForm istnieje, ale nie prowadzi do implementacji) - **patrz sekcja 1.2: Do zaimplementowania**
 
 ## 2. Architektura interfejsu użytkownika
 
@@ -144,10 +236,26 @@ Moduł autentykacji w aplikacji GdziePies wykorzystuje Supabase Auth do zarządz
   - Sprawdzenie sesji przed wysłaniem komentarza
   - Przekierowanie do logowania z `redirectTo` jeśli użytkownik niezalogowany
   - Wysyłanie tokenu autoryzacji w nagłówku `Authorization: Bearer ${token}`
+  - Blokada formularza dla ogłoszeń ze statusem "resolved" (ZNALEZIONE) - zgodnie z US-007
 - **Stan**:
   - `content: string` - treść komentarza
   - `isSighting: boolean` - czy komentarz oznacza "widziałem zwierzę"
   - `isSubmitting: boolean` - stan wysyłania
+- **Props**:
+  - `isResolved: boolean` - czy ogłoszenie jest oznaczone jako znalezione (blokuje formularz)
+
+**`src/components/announcements/AdForm.tsx`** (ISTNIEJE)
+- **Odpowiedzialność**: Formularz dodawania i edycji ogłoszeń
+- **Funkcjonalność autoryzacji**:
+  - Sprawdzenie sesji przed wysłaniem ogłoszenia (client-side)
+  - Przekierowanie do logowania z `redirectTo` jeśli użytkownik niezalogowany
+  - Wysyłanie tokenu autoryzacji w nagłówku `Authorization: Bearer ${token}` do POST/PATCH /api/announcements
+  - Walidacja, że użytkownik jest autorem przy edycji (wymaganie US-006)
+- **Stan**:
+  - `mode: 'create' | 'edit'` - tryb działania formularza
+  - `isSubmitting: boolean` - stan wysyłania
+  - Formularz z polami zgodnie z PRD US-005 (obowiązkowe i opcjonalne)
+- **Użycie**: Strony `/dodaj-ogloszenie` i `/moje-konto/edycja/[id]`
 
 **`src/components/dashboard/DashboardGuard.tsx`** (ISTNIEJE)
 - **Odpowiedzialność**: Komponent ochrony stron wymagających autoryzacji
@@ -207,7 +315,8 @@ Funkcja `mapSupabaseError` w `AuthForm.tsx` mapuje błędy Supabase na komunikat
 7. Jeśli sukces:
    - Oczekiwanie na sesję (300ms delay)
    - Pobranie sesji przez `getSession()`
-   - Przekierowanie na `/` lub `redirectTo`
+   - Automatyczne logowanie po rejestracji (zgodnie z PRD US-001)
+   - Przekierowanie na `/` (strona główna) lub `redirectTo` jeśli podano (zgodnie z PRD US-001)
 8. Jeśli błąd:
    - Wyświetlenie komunikatu błędu przez `mapSupabaseError`
 
@@ -221,17 +330,18 @@ Funkcja `mapSupabaseError` w `AuthForm.tsx` mapuje błędy Supabase na komunikat
 6. Wywołanie `client.auth.signInWithPassword()` z Supabase
 7. Jeśli sukces:
    - Sesja zapisywana automatycznie w localStorage przez Supabase
-   - Przekierowanie na `/` lub `redirectTo`
+   - Przekierowanie na `/` (strona główna) lub `redirectTo` jeśli podano (zgodnie z PRD US-002)
 8. Jeśli błąd:
    - Wyświetlenie komunikatu błędu przez `mapSupabaseError`
 
-#### 2.3.3. Wylogowanie
+#### 2.3.3. Wylogowanie (wymaganie z PRD sekcja 3.1)
 
 1. Użytkownik klika "Wyloguj się" w menu Header
 2. Wywołanie `client.auth.signOut()` z Supabase
-3. Usunięcie sesji z localStorage
-4. Przekierowanie na `/`
+3. Usunięcie sesji z localStorage (automatycznie przez Supabase)
+4. Przekierowanie na `/` (strona główna)
 5. Header automatycznie aktualizuje się przez `onAuthStateChange`
+6. Wszystkie komponenty nasłuchujące zmian autoryzacji aktualizują się automatycznie
 
 #### 2.3.4. Odzyskiwanie hasła (DO IMPLEMENTACJI)
 
@@ -260,10 +370,11 @@ Funkcja `mapSupabaseError` w `AuthForm.tsx` mapuje błędy Supabase na komunikat
 **Dane kontaktowe (US-010)**:
 1. Niezalogowany użytkownik próbuje zobaczyć dane kontaktowe
 2. `ContactReveal` sprawdza sesję → brak sesji
-3. Przekierowanie na `/logowanie?redirectTo=/ogloszenia/[id]`
-4. Po zalogowaniu automatyczne przekierowanie z powrotem
-5. `ContactReveal` ponownie sprawdza sesję → sesja istnieje
-6. Wywołanie RPC `get_contact_details` i wyświetlenie danych
+3. Wyświetlenie komunikatu/przycisku "Zaloguj się, aby zobaczyć dane kontaktowe" (zgodnie z PRD US-003)
+4. Przekierowanie na `/logowanie?redirectTo=/ogloszenia/[id]` po kliknięciu
+5. Po zalogowaniu automatyczne przekierowanie z powrotem
+6. `ContactReveal` ponownie sprawdza sesję → sesja istnieje
+7. Wywołanie RPC `get_contact_details` i wyświetlenie danych
 
 **Dodawanie komentarza (US-008, US-009)**:
 1. Niezalogowany użytkownik próbuje dodać komentarz
@@ -271,7 +382,18 @@ Funkcja `mapSupabaseError` w `AuthForm.tsx` mapuje błędy Supabase na komunikat
 3. Przekierowanie na `/logowanie?redirectTo=/ogloszenia/[id]`
 4. Po zalogowaniu automatyczne przekierowanie z powrotem
 5. `CommentForm` ponownie sprawdza sesję → sesja istnieje
-6. Wysłanie komentarza z tokenem w nagłówku `Authorization`
+6. Sprawdzenie, czy ogłoszenie nie jest oznaczone jako "ZNALEZIONE" (status "resolved")
+7. Jeśli ogłoszenie jest "ZNALEZIONE" → wyświetlenie komunikatu "Nie można już dodawać komentarzy" (zgodnie z US-007)
+8. Jeśli ogłoszenie jest aktywne → wysłanie komentarza z tokenem w nagłówku `Authorization`
+
+**Dodawanie ogłoszenia (US-005)**:
+1. Użytkownik próbuje dodać ogłoszenie na `/dodaj-ogloszenie`
+2. Strona pobiera użytkownika server-side
+3. Jeśli brak sesji → komponent `AdForm` przekierowuje do `/logowanie?redirectTo=/dodaj-ogloszenie`
+4. Po zalogowaniu automatyczne przekierowanie z powrotem
+5. `AdForm` sprawdza sesję client-side → sesja istnieje
+6. Wysłanie ogłoszenia z tokenem w nagłówku `Authorization: Bearer ${token}` do POST /api/announcements
+7. API endpoint weryfikuje token i tworzy ogłoszenie z `author_id = auth.uid()`
 
 **Zarządzanie ogłoszeniami (US-006)**:
 1. Użytkownik próbuje wejść na `/moje-konto`
@@ -279,7 +401,15 @@ Funkcja `mapSupabaseError` w `AuthForm.tsx` mapuje błędy Supabase na komunikat
 3. Przekierowanie na `/logowanie?redirectTo=/moje-konto`
 4. Po zalogowaniu automatyczne przekierowanie na `/moje-konto`
 5. `DashboardGuard` ponownie sprawdza sesję → sesja istnieje
-6. Renderowanie zawartości dashboardu
+6. Renderowanie zawartości dashboardu z listą ogłoszeń użytkownika
+
+**Oznaczanie jako "ZNALEZIONE" (US-007)**:
+1. Autor ogłoszenia klika przycisk "Oznacz jako ZNALEZIONE" na stronie szczegółowej lub w dashboardzie
+2. Wysłanie żądania PATCH /api/announcements/{id} z body: `{ "status": "resolved" }`
+3. API endpoint weryfikuje, że użytkownik jest autorem (RLS + walidacja)
+4. Aktualizacja statusu w bazie danych
+5. Frontend aktualizuje UI - wyświetla baner "ZNALEZIONE"
+6. Formularz komentarzy jest automatycznie zablokowany (sprawdzenie `isResolved` w `CommentForm`)
 
 ## 3. Logika backendowa
 
@@ -395,14 +525,17 @@ Obecnie aplikacja nie posiada dedykowanych endpointów API dla autorykacji - wsz
 - Trigger `handle_new_user` automatycznie tworzy profil przy rejestracji
 
 **Ogłoszenia**:
+- Użytkownik może tworzyć ogłoszenia tylko gdy jest zalogowany (wymaganie US-005)
 - Użytkownik może tworzyć ogłoszenia tylko dla siebie (`author_id = auth.uid()`)
 - Użytkownik może edytować/usunąć tylko swoje ogłoszenia
-- Wszyscy mogą odczytywać aktywne ogłoszenia
+- Użytkownik może oznaczyć jako "ZNALEZIONE" tylko swoje ogłoszenia (wymaganie US-007)
+- Wszyscy mogą odczytywać aktywne ogłoszenia (również niezalogowani - wymaganie US-003)
 
 **Komentarze**:
-- Użytkownik może tworzyć komentarze tylko gdy jest zalogowany
+- Użytkownik może tworzyć komentarze tylko gdy jest zalogowany (wymaganie US-008)
+- Komentarze są zablokowane dla ogłoszeń ze statusem "resolved" (ZNALEZIONE) - wymaganie US-007
 - Użytkownik może edytować/usunąć tylko swoje komentarze
-- Wszyscy mogą odczytywać komentarze do ogłoszeń
+- Wszyscy mogą odczytywać komentarze do ogłoszeń (również niezalogowani)
 
 **Dane kontaktowe**:
 - Funkcja RPC `get_contact_details` sprawdza autoryzację
@@ -440,11 +573,12 @@ Obecnie aplikacja nie posiada dedykowanych endpointów API dla autorykacji - wsz
 - Mapowanie błędów Supabase na komunikaty po polsku
 - Link do odzyskiwania hasła (obecnie nieaktywny - `#`)
 
-✅ **Wylogowanie użytkownika**
+✅ **Wylogowanie użytkownika** (wymaganie z PRD sekcja 3.1)
 - Przycisk wylogowania w Header
 - Integracja z Supabase Auth (`signOut`)
 - Automatyczne przekierowanie na `/` po wylogowaniu
 - Synchronizacja stanu przez `onAuthStateChange`
+- Usunięcie sesji z localStorage
 
 ✅ **Ochrona stron wymagających autoryzacji**
 - `DashboardGuard` dla strony `/moje-konto`
@@ -462,6 +596,7 @@ Obecnie aplikacja nie posiada dedykowanych endpointów API dla autorykacji - wsz
 - Przekierowanie do logowania dla niezalogowanych
 - Wysyłanie tokenu w nagłówku `Authorization`
 - Obsługa checkboxa "Widziałem to zwierzę"
+- Blokada formularza dla ogłoszeń "ZNALEZIONE" (status "resolved") - zgodnie z US-007
 
 ✅ **Middleware autoryzacji**
 - Ekstrakcja tokenu z cookies lub nagłówka `Authorization`
@@ -712,11 +847,26 @@ Sesja istnieje → Wyświetlenie zasobu
 4. Reset hasła z wygasłym tokenem → błąd "Token wygasł"
 5. Reset hasła z nieprawidłowym tokenem → błąd "Nieprawidłowy token"
 
+**Dodawanie ogłoszenia (US-005)**:
+1. Próba dodania ogłoszenia bez logowania → redirect na logowanie z redirectTo
+2. Dodawanie ogłoszenia z poprawnymi danymi (zalogowany) → sukces, ogłoszenie utworzone
+3. Dodawanie ogłoszenia bez wymaganych pól → błąd walidacji 400
+4. Dodawanie ogłoszenia z nieprawidłowym tokenem → błąd 401
+5. Po zalogowaniu automatyczne przekierowanie z powrotem do formularza
+
+**Oznaczanie jako "ZNALEZIONE" (US-007)**:
+1. Próba oznaczenia ogłoszenia bez logowania → redirect na logowanie
+2. Próba oznaczenia cudzego ogłoszenia → błąd 403 (brak uprawnień)
+3. Oznaczenie własnego ogłoszenia jako "ZNALEZIONE" → sukces, status zmieniony na "resolved"
+4. Sprawdzenie, czy formularz komentarzy jest zablokowany dla ogłoszenia "ZNALEZIONE"
+5. Sprawdzenie, czy ogłoszenie "ZNALEZIONE" pozostaje widoczne w serwisie
+
 **Dostęp do chronionych zasobów**:
-1. Próba dostępu do danych kontaktowych bez logowania → redirect na logowanie
+1. Próba dostępu do danych kontaktowych bez logowania → wyświetlenie komunikatu/przycisku "Zaloguj się, aby zobaczyć dane kontaktowe" (US-003)
 2. Próba dodania komentarza bez logowania → redirect na logowanie
-3. Próba wejścia na /moje-konto bez logowania → redirect na logowanie
-4. Po zalogowaniu automatyczne przekierowanie z powrotem do zasobu
+3. Próba dodania komentarza do ogłoszenia "ZNALEZIONE" → formularz zablokowany (US-007)
+4. Próba wejścia na /moje-konto bez logowania → redirect na logowanie
+5. Po zalogowaniu automatyczne przekierowanie z powrotem do zasobu
 
 ## 10. Podsumowanie
 
@@ -724,26 +874,49 @@ Sesja istnieje → Wyświetlenie zasobu
 
 Aplikacja ma w pełni funkcjonalny moduł autorykacji dla rejestracji, logowania i wylogowania. System jest zintegrowany z Supabase Auth i wykorzystuje RLS do ochrony danych. Komponenty są responsywne i obsługują różne scenariusze użytkownika.
 
+**Wszystkie wymagania z PRD dotyczące autoryzacji są zaimplementowane** (US-001, US-002, US-003, US-005, US-006, US-007, US-008, US-009, US-010).
+
 ### 10.2. Brakujące funkcjonalności
 
-Główną brakującą funkcjonalnością jest **odzyskiwanie hasła**. Link istnieje w formularzu logowania, ale nie prowadzi do implementacji. Wymagane jest utworzenie dwóch stron Astro i dwóch komponentów React oraz rozszerzenie schematów walidacji.
+**Główna brakująca funkcjonalność: Odzyskiwanie hasła**
+
+Szczegółowy plan implementacji znajduje się w sekcji **6. Wymagane zmiany i rozszerzenia**.
+
+**Wymagane pliki do utworzenia:**
+- 2 komponenty React (`PasswordResetForm.tsx`, `PasswordResetConfirmForm.tsx`)
+- 2 strony Astro (`odzyskiwanie-hasla.astro`, `reset-hasla.astro`)
+- Rozszerzenie schematów walidacji w `auth-schema.ts`
+
+**Wymagane zmiany:**
+- Aktualizacja linku w `AuthForm.tsx` (linia 296)
+- Integracja z Supabase Auth API
+- Konfiguracja email templates w Supabase
+
+**Szacowany zakres:** ~300-400 linii kodu + konfiguracja Supabase
 
 ### 10.3. Rekomendacje
 
-1. **Priorytet**: Implementacja odzyskiwania hasła zgodnie z sekcją 6.1
-2. **Opcjonalne**: Rozszerzenie obsługi błędów i komunikatów sukcesu
-3. **Opcjonalne**: Dodanie walidacji siły hasła (oprócz minimum 6 znaków)
+1. **Priorytet WYSOKI**: Implementacja odzyskiwania hasła zgodnie z sekcją 6.1
+2. **Priorytet ŚREDNI**: Rozszerzenie obsługi błędów i komunikatów sukcesu
+3. **Priorytet NISKI**: Dodanie walidacji siły hasła (oprócz minimum 6 znaków)
 4. **Konfiguracja**: Dostosowanie szablonów e-mail w Supabase do języka polskiego
 
-### 10.4. Zgodność z wymaganiami
+### 10.4. Zgodność z wymaganiami PRD
 
 ✅ **US-001**: Rejestracja - zaimplementowana i działająca
 ✅ **US-002**: Logowanie - zaimplementowane i działające
+✅ **Wylogowanie**: Zaimplementowane i działające (wymaganie z PRD sekcja 3.1)
 ✅ **US-003**: Przeglądanie przez niezalogowanych - zaimplementowane (z ograniczeniami)
+✅ **US-005**: Dodawanie ogłoszeń - wymaga autoryzacji (zaimplementowane w API endpoint POST /api/announcements)
 ✅ **US-006**: Zarządzanie ogłoszeniami - wymaga autoryzacji (zaimplementowane)
-✅ **US-008**: Dodawanie komentarzy - wymaga autoryzacji (zaimplementowane)
+✅ **US-007**: Oznaczanie jako "ZNALEZIONE" - wymaga autoryzacji (zaimplementowane, blokuje komentarze)
+✅ **US-008**: Dodawanie komentarzy - wymaga autoryzacji (zaimplementowane, zablokowane dla "ZNALEZIONE")
 ✅ **US-009**: Zgłaszanie "widziałem zwierzę" - wymaga autoryzacji (zaimplementowane)
 ✅ **US-010**: Dostęp do danych kontaktowych - tylko dla zalogowanych (zaimplementowane)
 
 **Odzyskiwanie hasła** nie jest wymienione w wymaganiach PRD, ale jest standardową funkcjonalnością i powinno być zaimplementowane dla lepszego UX.
+
+### 10.5. Szybkie odniesienie do statusu
+
+Dla szybkiego przeglądu statusu implementacji, zobacz sekcję **1.2. Status implementacji** na początku tego dokumentu.
 

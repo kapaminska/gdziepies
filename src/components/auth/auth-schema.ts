@@ -18,7 +18,25 @@ export const registerSchema = z
     path: ['confirmPassword'],
   });
 
+// Schema dla inicjacji resetu hasła
+export const passwordResetSchema = z.object({
+  email: z.string().email({ message: 'Nieprawidłowy format adresu e-mail' }),
+});
+
+// Schema dla potwierdzenia resetu hasła
+export const passwordResetConfirmSchema = z
+  .object({
+    password: z.string().min(6, { message: 'Hasło musi mieć minimum 6 znaków' }),
+    confirmPassword: z.string().min(1, { message: 'Potwierdzenie hasła jest wymagane' }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Hasła muszą być identyczne',
+    path: ['confirmPassword'],
+  });
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
+export type PasswordResetFormValues = z.infer<typeof passwordResetSchema>;
+export type PasswordResetConfirmFormValues = z.infer<typeof passwordResetConfirmSchema>;
 
 
