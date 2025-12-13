@@ -59,3 +59,4 @@ create policy "avatars_delete_authenticated"
 
 
 
+

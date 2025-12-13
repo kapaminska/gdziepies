@@ -15,6 +15,10 @@ A modern, opinionated starter template for building fast, accessible, and AI-fri
 - [React Testing Library](https://testing-library.com/react) - Simple and complete testing utilities for React components
 - [Playwright](https://playwright.dev/) - End-to-end testing framework for reliable web applications
 
+### Hosting
+
+- [Cloudflare Pages](https://pages.cloudflare.com/) - JAMstack hosting platform for fast, global deployments
+
 ## Prerequisites
 
 - Node.js v22.14.0 (as specified in `.nvmrc`)
