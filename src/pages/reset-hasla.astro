@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { PasswordResetConfirmForm } from '../components/auth/PasswordResetConfirmForm';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 // Check if user is already logged in
 const {
@@ -17,8 +18,7 @@ const token = Astro.url.searchParams.get('token') || undefined;
 const type = Astro.url.searchParams.get('type') || undefined;
 
 // Pass Supabase config to client component
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 ---
 
 <Layout title="Resetowanie hasła">
@@ -37,7 +37,6 @@ const supabaseKey = import.meta.env.SUPABASE_KEY;
     />
   </main>
 </Layout>
-
 
 
 

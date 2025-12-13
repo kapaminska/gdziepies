@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { Header } from "../components/Header";
 import { Toaster } from "../components/ui/sonner";
+import { getSupabaseConfig } from "@/lib/supabase-config";
 
 interface Props {
   title?: string;
@@ -28,8 +29,7 @@ if (authError && import.meta.env.DEV) {
   }
 }
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 ---
 
 <!doctype html>

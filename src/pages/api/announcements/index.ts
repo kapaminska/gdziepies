@@ -9,6 +9,7 @@ import {
   createAnnouncementSchema,
   getAnnouncementsQuerySchema,
 } from '../../../lib/validators/announcements';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 export const prerender = false;
 
@@ -65,8 +66,7 @@ export async function POST(context: APIContext) {
     }
 
     // Create a new client for this request
-    const supabaseUrl = import.meta.env.SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+    const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
     
     const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -137,5 +137,4 @@ export async function POST(context: APIContext) {
     return handleApiError(error);
   }
 }
-
 

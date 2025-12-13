@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 import type { Database } from '../db/database.types.ts';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
 
 export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {

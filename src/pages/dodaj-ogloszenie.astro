@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { AdForm } from '../components/announcements/AdForm';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 // Try to get user, but don't redirect here - let AdForm handle it client-side
 // This allows the page to load and check auth in the browser
@@ -8,8 +9,7 @@ const {
   data: { user },
 } = await Astro.locals.supabase.auth.getUser();
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 ---
 
 <Layout title="Dodaj ogłoszenie">
@@ -28,4 +28,3 @@ const supabaseKey = import.meta.env.SUPABASE_KEY;
     />
   </main>
 </Layout>
-

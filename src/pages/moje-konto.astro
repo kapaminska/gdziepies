@@ -1,12 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { DashboardGuard } from '../components/dashboard/DashboardGuard';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 export const prerender = false;
 
 // Pass Supabase config to client component
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 ---
 
 <Layout title="Moje konto">
@@ -23,5 +23,4 @@ const supabaseKey = import.meta.env.SUPABASE_KEY;
     />
   </main>
 </Layout>
-
 

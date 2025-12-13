@@ -11,6 +11,7 @@ import { ContactReveal } from '../../components/announcements/ContactReveal';
 import { AuthorControls } from '../../components/announcements/AuthorControls';
 import { CommentsSection } from '../../components/announcements/CommentsSection';
 import { AdStatusBadge } from '../../components/dashboard/AdStatusBadge';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 export const prerender = false;
 
@@ -52,8 +53,7 @@ function getBadgeInfo(type: 'lost' | 'found') {
 }
 
 const badgeInfo = getBadgeInfo(announcement.type);
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 ---
 
 <Layout title={`${announcement.title} - GdziePies`}>
