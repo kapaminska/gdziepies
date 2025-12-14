@@ -37,7 +37,7 @@ export class AnnouncementService {
     // Use left join to profiles_public view to get author information
     let query = supabaseClient
       .from('announcements')
-      .select('*,profiles_public!announcements_author_id_fkey(id,username)', { count: 'exact' });
+      .select('*,profiles_public!announcements_author_id_fkey(id,username,avatar_url,created_at)', { count: 'exact' });
 
     // Apply filters
     if (filters.type) {
@@ -110,6 +110,7 @@ export class AnnouncementService {
           ? {
               id: profiles_public.id,
               username: profiles_public.username,
+              avatar_url: profiles_public.avatar_url,
               created_at: profiles_public.created_at,
             }
           : null,
@@ -139,7 +140,7 @@ export class AnnouncementService {
   ): Promise<AnnouncementDto> {
     const { data, error } = await supabaseClient
       .from('announcements')
-      .select('*,profiles_public!announcements_author_id_fkey(id,username)')
+      .select('*,profiles_public!announcements_author_id_fkey(id,username,avatar_url,created_at)')
       .eq('id', id)
       .single();
 
@@ -164,6 +165,7 @@ export class AnnouncementService {
         ? {
             id: profiles_public.id,
             username: profiles_public.username,
+            avatar_url: profiles_public.avatar_url,
             created_at: profiles_public.created_at,
           }
         : null,
@@ -190,7 +192,7 @@ export class AnnouncementService {
     const { data, error } = await supabaseClient
       .from('announcements')
       .insert(insertData)
-      .select('*,profiles_public!announcements_author_id_fkey(id,username)')
+      .select('*,profiles_public!announcements_author_id_fkey(id,username,avatar_url,created_at)')
       .single();
 
     if (error) {
@@ -214,6 +216,7 @@ export class AnnouncementService {
         ? {
             id: profiles_public.id,
             username: profiles_public.username,
+            avatar_url: profiles_public.avatar_url,
             created_at: profiles_public.created_at,
           }
         : null,
@@ -250,7 +253,7 @@ export class AnnouncementService {
       .from('announcements')
       .update(updateData)
       .eq('id', id)
-      .select('*,profiles_public!announcements_author_id_fkey(id,username)')
+      .select('*,profiles_public!announcements_author_id_fkey(id,username,avatar_url,created_at)')
       .single();
 
     if (error) {
@@ -270,6 +273,7 @@ export class AnnouncementService {
         ? {
             id: profiles_public.id,
             username: profiles_public.username,
+            avatar_url: profiles_public.avatar_url,
             created_at: profiles_public.created_at,
           }
         : null,

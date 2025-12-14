@@ -109,6 +109,22 @@ export function AdForm({
 
   const schema = mode === 'create' ? createAnnouncementSchema : updateAnnouncementSchema;
 
+  // Read type from URL query parameter if available (for create mode)
+  const getInitialType = (): 'lost' | 'found' => {
+    if (initialData) {
+      return initialData.type;
+    }
+    if (mode === 'create' && typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const typeParam = searchParams.get('type');
+      if (typeParam === 'lost' || typeParam === 'found') {
+        console.log('Setting initial type from URL:', typeParam);
+        return typeParam;
+      }
+    }
+    return 'lost';
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData
@@ -130,7 +146,7 @@ export function AdForm({
           is_fearful: initialData.is_fearful,
         }
       : {
-          type: 'lost',
+          type: getInitialType(),
           species: 'dog',
           is_aggressive: false,
           is_fearful: false,
@@ -269,6 +285,7 @@ export function AdForm({
       }
 
       console.log('Sending request to:', url);
+      console.log('Form data type:', data.type);
       console.log('Token length:', session.access_token.length);
       console.log('Token preview:', session.access_token.substring(0, 20) + '...');
 

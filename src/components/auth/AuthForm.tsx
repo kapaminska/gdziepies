@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -79,6 +79,7 @@ const mapSupabaseError = (error: { message?: string } | null): string => {
 
 export function AuthForm({ mode, supabaseUrl, supabaseKey, redirectTo }: AuthFormProps) {
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Create Supabase client for browser-side use (using singleton to prevent multiple instances)
@@ -115,6 +116,7 @@ export function AuthForm({ mode, supabaseUrl, supabaseKey, redirectTo }: AuthFor
   const onSubmit = async (data: LoginFormValues | RegisterFormValues) => {
     setIsLoading(true);
     setGlobalError(null);
+    setSuccessMessage(null);
 
     try {
       let session;
@@ -155,6 +157,21 @@ export function AuthForm({ mode, supabaseUrl, supabaseKey, redirectTo }: AuthFor
         if (!authData.user) {
           setGlobalError('Nie udało się zarejestrować. Spróbuj ponownie.');
           setIsLoading(false);
+          return;
+        }
+
+        // Check if email confirmation is required
+        // If user doesn't have email_confirmed_at and no session, they need to confirm email
+        const needsEmailConfirmation = !authData.user.email_confirmed_at && !authData.session;
+        
+        if (needsEmailConfirmation) {
+          // User needs to confirm email - show success message
+          setIsLoading(false);
+          setSuccessMessage(
+            'Rejestracja zakończona pomyślnie! Sprawdź swoją skrzynkę pocztową i kliknij w link weryfikacyjny, aby potwierdzić adres e-mail.'
+          );
+          // Reset form
+          form.reset();
           return;
         }
 
@@ -212,6 +229,16 @@ export function AuthForm({ mode, supabaseUrl, supabaseKey, redirectTo }: AuthFor
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Błąd</AlertTitle>
                 <AlertDescription>{globalError}</AlertDescription>
+              </Alert>
+            )}
+
+            {successMessage && (
+              <Alert variant="default" className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertTitle className="text-green-800 dark:text-green-200">Sukces</AlertTitle>
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  {successMessage}
+                </AlertDescription>
               </Alert>
             )}
 
