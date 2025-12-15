@@ -62,10 +62,25 @@ const announcementStatusSchema = z.enum(['active', 'resolved'], {
 
 /**
  * Schema for validating ISO date string (YYYY-MM-DD).
+ * Also validates that the date is not in the future.
  */
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-  message: 'Data musi być w formacie YYYY-MM-DD',
-});
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'Data musi być w formacie YYYY-MM-DD',
+  })
+  .refine(
+    (date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      const dateToCheck = new Date(date);
+      dateToCheck.setHours(0, 0, 0, 0);
+      return dateToCheck <= today;
+    },
+    {
+      message: 'Data zdarzenia nie może być z przyszłości',
+    }
+  );
 
 /**
  * Schema for validating query parameters for GET /api/announcements.
